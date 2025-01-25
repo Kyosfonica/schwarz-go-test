@@ -42,11 +42,11 @@ To run the code in docker you can use the following make commands:
 To run the code in local I have added a make rule that automatically runs the server.
 1. run the command ```make run``` to start the server from your local machine. Default host is localhost and port is 8080.
 
-To run the tests you can use the following make commands:
+To run the tests you can use the following make command:
 1. run the command ```make test``` to run the tests with coverage
 
-To run the linter you can use the following make commands:
+To run the linter you can use the following make command:
 1. run the command ```make lint``` to run the linter
 
 ## Final thoughts
-I really enjoyed working on this test and I hope you like the changes I made.
+I really enjoyed working on this test and I hope you like the changes I made to it.
