@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -72,6 +73,28 @@ func TestApplyCoupon_InvalidRequest_ReturnsBadRequest(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
+func TestApplyCoupon_ServiceError_ReturnsInternalServerError(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	cfg := api.Config{Host: "localhost", Port: 8080}
+	svc := new(MockService)
+	apiInstance := api.New(cfg, svc)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	basket := entity.Basket{}
+	svc.On("ApplyCoupon", basket, "TESTCODE").Return(&basket, errors.New("service error"))
+
+	body := `{"basket":{},"code":"TESTCODE"}`
+	c.Request, _ = http.NewRequest(http.MethodPost, "/api/apply", strings.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+	apiInstance.Apply(c)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
 func TestCreateCoupon_ValidRequest_ReturnsOK(t *testing.T) {
 	t.Parallel()
 
@@ -108,6 +131,27 @@ func TestCreateCoupon_InvalidRequest_ReturnsBadRequest(t *testing.T) {
 	apiInstance.Create(c)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestCreateCoupon_ServiceError_ReturnsInternalServerError(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	cfg := api.Config{Host: "localhost", Port: 8080}
+	svc := new(MockService)
+	apiInstance := api.New(cfg, svc)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	svc.On("CreateCoupon", 10, "NEWCODE", 30).Return(errors.New("service error"))
+
+	body := `{"discount":10,"code":"NEWCODE","minBasketValue":30}`
+	c.Request, _ = http.NewRequest(http.MethodPost, "/api/create", strings.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+	apiInstance.Create(c)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
 func TestGetCoupons_ValidRequest_ReturnsOK(t *testing.T) {
@@ -147,4 +191,25 @@ func TestGetCoupons_InvalidRequest_ReturnsBadRequest(t *testing.T) {
 	apiInstance.Get(c)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestGetCoupons_ServiceError_ReturnsInternalServerError(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	cfg := api.Config{Host: "localhost", Port: 8080}
+	svc := new(MockService)
+	apiInstance := api.New(cfg, svc)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	svc.On("GetCoupons", []string{"CODE1", "CODE2"}).Return([]entity.Coupon{}, errors.New("service error"))
+
+	body := `{"codes":["CODE1","CODE2"]}`
+	c.Request, _ = http.NewRequest(http.MethodGet, "/api/coupons", strings.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+	apiInstance.Get(c)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

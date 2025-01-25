@@ -97,6 +97,16 @@ func TestService_ApplyCoupon(t *testing.T) {
 			wantB:   nil,
 			wantErr: true,
 		},
+		{
+			name:   "apply coupon to negative value basket",
+			fields: fields{repo: mockRepo},
+			args: args{
+				basket: entity.Basket{Value: -1},
+				code:   "VALIDCOUPON",
+			},
+			wantB:   nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -146,6 +156,81 @@ func TestService_CreateCoupon(t *testing.T) {
 			err := s.CreateCoupon(tt.args.discount, tt.args.code, tt.args.minBasketValue)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateCoupon() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestService_GetCoupons(t *testing.T) {
+	t.Parallel()
+
+	mockRepo := new(MockRepository)
+	mockRepo.On("FindByCode", "VALIDCOUPON1").Return(&entity.Coupon{Discount: 10}, nil)
+	mockRepo.On("FindByCode", "VALIDCOUPON2").Return(&entity.Coupon{Discount: 20}, nil)
+	mockRepo.On("FindByCode", "INVALIDCOUPON").Return(&entity.Coupon{}, fmt.Errorf("coupon not found"))
+
+	type fields struct {
+		repo Repository
+	}
+	type args struct {
+		codes []string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []entity.Coupon
+		wantErr bool
+	}{
+		{
+			name:   "get valid coupons",
+			fields: fields{repo: mockRepo},
+			args: args{
+				codes: []string{"VALIDCOUPON1", "VALIDCOUPON2"},
+			},
+			want:    []entity.Coupon{{Discount: 10}, {Discount: 20}},
+			wantErr: false,
+		},
+		{
+			name:   "get invalid coupon",
+			fields: fields{repo: mockRepo},
+			args: args{
+				codes: []string{"INVALIDCOUPON"},
+			},
+			want:    []entity.Coupon{},
+			wantErr: true,
+		},
+		{
+			name:   "get mixed valid and invalid coupons",
+			fields: fields{repo: mockRepo},
+			args: args{
+				codes: []string{"VALIDCOUPON1", "INVALIDCOUPON"},
+			},
+			want:    []entity.Coupon{{Discount: 10}},
+			wantErr: true,
+		},
+		{
+			name:   "get various mixed valid and invalid coupons",
+			fields: fields{repo: mockRepo},
+			args: args{
+				codes: []string{"VALIDCOUPON1", "INVALIDCOUPON", "VALIDCOUPON2", "INVALIDCOUPON"},
+			},
+			want:    []entity.Coupon{{Discount: 10}, {Discount: 20}},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Service{
+				repo: tt.fields.repo,
+			}
+			got, err := s.GetCoupons(tt.args.codes)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetCoupons() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetCoupons() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

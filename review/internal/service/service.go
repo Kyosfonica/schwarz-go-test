@@ -30,17 +30,15 @@ func (s Service) ApplyCoupon(basket entity.Basket, code string) (b *entity.Baske
 		return nil, err
 	}
 
-	if b.Value > 0 {
-		b.AppliedDiscount = coupon.Discount
-		b.ApplicationSuccessful = true
-
-		return b, nil
-	}
-	if b.Value == 0 {
-		return nil, fmt.Errorf("basket value is zero")
+	if b.Value <= 0 {
+		return nil, fmt.Errorf("basket value is equal or lower than zero")
 	}
 
-	return nil, fmt.Errorf("tried to apply discount to negative value")
+	b.AppliedDiscount = coupon.Discount
+	b.ApplicationSuccessful = true
+
+	return b, nil
+
 }
 
 func (s Service) CreateCoupon(discount int, code string, minBasketValue int) error {
