@@ -13,9 +13,11 @@ I have fixed all the security issues from the dependencies and updated the go ve
 
 I fixed the code smells, refactored some code to make it more readable and added some tests. I also fixed a race condition that was present in the code.
 
+I secured the membd access by adding a mutex to the struct, ensuring reads and writes are done safely.
+
 I have added a few tests with dependency mocks to ensure the logic is working as expected.
 
-I moved the CPU check init to the main.go file, as it makes more sense to me to have it there1. I decided to leave it as I am not sure if that check is a requirement for this project.
+I moved the CPU check init to the main.go file, as it makes more sense to me to have it there. I decided to leave it as I am not sure if that check is a requirement for this project.
 
 
 ## Project Structure
